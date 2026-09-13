@@ -1,0 +1,46 @@
+name: Morning Health Summary
+
+on:
+  schedule:
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      - name: Build ghealth CLI
+        run: |
+          git clone https://github.com/Google-Health-API/google-health-cli.git ghealth-src
+          cd ghealth-src
+          go build -o ../ghealth .
+
+      - name: Restore ghealth credentials
+        run: |
+          mkdir -p ~/.config/ghealth
+          echo "${{ secrets.GHEALTH_CONFIG_TOML_B64 }}" | base64 -d > ~/.config/ghealth/config.toml
+          echo "${{ secrets.GHEALTH_CREDENTIALS_JSON_B64 }}" | base64 -d > ~/.config/ghealth/credentials.json
+          echo "${{ secrets.GHEALTH_CLIENT_SECRET_JSON_B64 }}" | base64 -d > ~/.config/ghealth/client_secret.json
+
+      - name: Run morning summary
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 morning_summary.py
