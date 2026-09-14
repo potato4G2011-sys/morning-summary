@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+""
 Morning health summary.
 Pulls yesterday's sleep, HRV, and resting heart rate from Google Health
 using the ghealth CLI, sends it to Gemini for a coaching style summary,
